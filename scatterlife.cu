@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <builtin_types.h>
+
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 
 #include "scatterlife.h" 
 
@@ -206,8 +209,8 @@ __global__ void rasterizeAutomata(){
 
   //this_grid().sync();
 
-
-  raster[x][y] = pc ? -1 : 0;
+  //AAGGBBRR
+  raster[x][y] = pc ? 0xFFFFFFFF : 0xFF000000;
 
   //(unsigned int)(16777215.0 * powf(pc / maxParticleCount, 0.2)) | 0xFF000000;
 }
@@ -249,6 +252,7 @@ void dump_univ(){
 
 
 void initOpenGL(){
+
   glfwInit();
 
   const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -265,6 +269,7 @@ void initOpenGL(){
 
   glfwMakeContextCurrent(window);
 
+  glewInit();
 
   // setup raster to texture modes
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -275,10 +280,15 @@ void initOpenGL(){
 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  // glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
                  GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
                  GL_LINEAR);
+  GLfloat fLargest;
+  glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &fLargest);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, fLargest);
 
   glMatrixMode(GL_PROJECTION);
 
@@ -310,8 +320,9 @@ DWORD WINAPI render( LPVOID lpParam ) {
 
 
       //glClear(GL_COLOR_BUFFER_BIT);
-
+      
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RASTER_WIDTH, RASTER_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, host_raster);
+      //glGenerateTextureMipmap(rasterTexture);
 
       glBegin(GL_TRIANGLE_STRIP);
 
@@ -325,8 +336,6 @@ DWORD WINAPI render( LPVOID lpParam ) {
       glfwSwapBuffers(window);
 
       glfwPollEvents();
-
-      Sleep(10);
   }
 
   exit(0);
@@ -342,7 +351,7 @@ int main(int argc, char **argv)
   cudaSetDevice(0);
   CreateThread(NULL, 0, render, NULL, 0, NULL);
 
-  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH;
+  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*8;
 
   //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
   host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
