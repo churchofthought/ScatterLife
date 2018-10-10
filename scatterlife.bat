@@ -1,0 +1,1 @@
+nvcc scatterlife.cu -run -o scatterlife.exe -Xptxas -O3,-v -arch=compute_70 -code=sm_70 -Xcompiler "/MD" -I "./" -l opengl32,glfw3,kernel32,user32,gdi32,winspool,shell32,ole32,oleaut32,uuid,comdlg32,advapi32
