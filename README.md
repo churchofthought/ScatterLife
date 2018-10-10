@@ -30,10 +30,11 @@ Given the particle counts = <x,y,z,t,u,v>, we can calculate the net direction by
 ## Scattering function
 The scattering function is applied to every cell at every new timestep after uptaking incoming particles from neighboring cells.
 
-f(<x,y,z,u,t,v>): ℕ_6 -> ℕ_6 
+f(<x,y,z,u,t,v>): ℕ<sup>6</sup> → ℕ<sup>6</sup> 
 
 This function has a few important properties dictated by the conservation laws.
 Σx = Σf(x) (particle counts conserved)
+
 netDirection(x) = netDirection(f(x)) (corresponding to the matrix/vector multiplication above)
 
 ## Special relativity
