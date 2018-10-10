@@ -193,15 +193,13 @@ __global__ void rasterizeAutomata(){
   //   maxParticleCount = 0;
   // }
 
-  Cell cell = univ[x][y];
-
   unsigned int pc = (
-      cell.bound[0] + cell.unbound[0]
-    + cell.bound[1] + cell.unbound[1]
-    + cell.bound[2] + cell.unbound[2]
-    + cell.bound[3] + cell.unbound[3]
-    + cell.bound[4] + cell.unbound[4]
-    + cell.bound[5] + cell.unbound[5]
+      univ[x][y].bound[0] + univ[x][y].unbound[0]
+    + univ[x][y].bound[1] + univ[x][y].unbound[1]
+    + univ[x][y].bound[2] + univ[x][y].unbound[2]
+    + univ[x][y].bound[3] + univ[x][y].unbound[3]
+    + univ[x][y].bound[4] + univ[x][y].unbound[4]
+    + univ[x][y].bound[5] + univ[x][y].unbound[5]
   );
 
   //atomicMax((unsigned int*) &maxParticleCount, pc);
@@ -209,9 +207,7 @@ __global__ void rasterizeAutomata(){
   //this_grid().sync();
 
 
-  unsigned int pixelColor = pc ? -1 : 0;
-
-  raster[x][y] = pixelColor;
+  raster[x][y] = pc ? -1 : 0;
 
   //(unsigned int)(16777215.0 * powf(pc / maxParticleCount, 0.2)) | 0xFF000000;
 }
@@ -329,6 +325,8 @@ DWORD WINAPI render( LPVOID lpParam ) {
       glfwSwapBuffers(window);
 
       glfwPollEvents();
+
+      Sleep(10);
   }
 
   exit(0);
@@ -369,6 +367,5 @@ int main(int argc, char **argv)
     runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1)>>>(true);
     runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1)>>>(false);
     cudaDeviceSynchronize();
-    // Sleep(1000);
   }
 }
