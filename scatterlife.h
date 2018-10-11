@@ -1,6 +1,6 @@
 
-#define UNIVERSE_WIDTH 3096
-#define UNIVERSE_HEIGHT 3096
+#define UNIVERSE_WIDTH 1024
+#define UNIVERSE_HEIGHT 1024
 
 typedef struct {
   unsigned int bound[6];

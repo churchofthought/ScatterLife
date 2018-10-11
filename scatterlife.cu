@@ -6,8 +6,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#define CUDA_API_PER_THREAD_DEFAULT_STREAM 1
 
 #include "scatterlife.h" 
+
 
 // CUDA runtime
 //#include <cooperative_groups.h>
@@ -196,21 +198,27 @@ __global__ void rasterizeAutomata(){
   //   maxParticleCount = 0;
   // }
 
-  unsigned int pc = (
-      univ[x][y].bound[0] + univ[x][y].unbound[0]
-    + univ[x][y].bound[1] + univ[x][y].unbound[1]
-    + univ[x][y].bound[2] + univ[x][y].unbound[2]
-    + univ[x][y].bound[3] + univ[x][y].unbound[3]
-    + univ[x][y].bound[4] + univ[x][y].unbound[4]
-    + univ[x][y].bound[5] + univ[x][y].unbound[5]
-  );
+  // unsigned int pc = (
+  //     univ[x][y].bound[0] + univ[x][y].unbound[0]
+  //   + univ[x][y].bound[1] + univ[x][y].unbound[1]
+  //   + univ[x][y].bound[2] + univ[x][y].unbound[2]
+  //   + univ[x][y].bound[3] + univ[x][y].unbound[3]
+  //   + univ[x][y].bound[4] + univ[x][y].unbound[4]
+  //   + univ[x][y].bound[5] + univ[x][y].unbound[5]
+  // );
 
   //atomicMax((unsigned int*) &maxParticleCount, pc);
 
   //this_grid().sync();
 
   //AAGGBBRR
-  raster[x][y] = pc ? 0xFFFFFFFF : 0xFF000000;
+  raster[x][y] = 
+      univ[x][y].bound[0] || univ[x][y].unbound[0]
+    || univ[x][y].bound[1] || univ[x][y].unbound[1]
+    || univ[x][y].bound[2] || univ[x][y].unbound[2]
+    || univ[x][y].bound[3] || univ[x][y].unbound[3]
+    || univ[x][y].bound[4] || univ[x][y].unbound[4]
+    || univ[x][y].bound[5] || univ[x][y].unbound[5] ? 0xFFFFFFFF : 0xFF000000;
 
   //(unsigned int)(16777215.0 * powf(pc / maxParticleCount, 0.2)) | 0xFF000000;
 }
@@ -308,7 +316,8 @@ void initOpenGL(){
 DWORD WINAPI render( LPVOID lpParam ) {
   initOpenGL();
 
-  double normalizer = 2/(3 * sqrt(3.0));
+  double scale = 0.75;
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
@@ -318,7 +327,6 @@ DWORD WINAPI render( LPVOID lpParam ) {
       // copy raster back to host
       cudaMemcpyFromSymbol(host_raster, raster, sizeof(UniImg), 0, cudaMemcpyDeviceToHost);
 
-
       //glClear(GL_COLOR_BUFFER_BIT);
       
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RASTER_WIDTH, RASTER_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, host_raster);
@@ -326,10 +334,10 @@ DWORD WINAPI render( LPVOID lpParam ) {
 
       glBegin(GL_TRIANGLE_STRIP);
 
-      glTexCoord2f(1.0f, 1.0f); glVertex2f(-normalizer, -normalizer);
-      glTexCoord2f(1.0f, 0.0f); glVertex2f(-normalizer, normalizer);
-      glTexCoord2f(0.0f, 1.0f); glVertex2f(normalizer, -normalizer);
-      glTexCoord2f(0.0f, 0.0f); glVertex2f(normalizer, normalizer);
+      glTexCoord2f(1.0f, 1.0f); glVertex2f(-scale, -scale);
+      glTexCoord2f(1.0f, 0.0f); glVertex2f(-scale, scale);
+      glTexCoord2f(0.0f, 1.0f); glVertex2f(scale, -scale);
+      glTexCoord2f(0.0f, 0.0f); glVertex2f(scale, scale);
 
       glEnd();
 
@@ -351,23 +359,23 @@ int main(int argc, char **argv)
   cudaSetDevice(0);
   CreateThread(NULL, 0, render, NULL, 0, NULL);
 
-  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*8;
+  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*4;
 
   //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
-  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].unbound[1] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].unbound[2] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].unbound[3] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].unbound[4] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].unbound[5] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].unbound[1] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].unbound[2] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].unbound[3] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].unbound[4] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].unbound[5] = INITIAL_PARTICLE_COUNT;
 
   //also set a 2nd wave of INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
   host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].bound[0] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].bound[1] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].bound[2] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].bound[1] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].bound[2] = INITIAL_PARTICLE_COUNT;
   host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].bound[3] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].bound[4] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].bound[5] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].bound[4] = INITIAL_PARTICLE_COUNT;
+  // host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].bound[5] = INITIAL_PARTICLE_COUNT;
 
   cudaMemcpyToSymbol(univ, host_univ, sizeof(Universe), 0, cudaMemcpyHostToDevice);
 
