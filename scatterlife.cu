@@ -49,7 +49,7 @@ __device__ Universe univ2 = {};
 
 __device__ UniImg raster = {};
 
-__device__ volatile unsigned int gTime = INITIAL_PARTICLE_COUNT; 
+__device__ volatile unsigned int gTime = INITIAL_PARTICLE_COUNT / 7; 
 
 //__device__ volatile unsigned int maxParticleCount = 0;
 
