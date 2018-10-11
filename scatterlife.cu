@@ -359,7 +359,7 @@ int main(int argc, char **argv)
   cudaSetDevice(0);
   CreateThread(NULL, 0, render, NULL, 0, NULL);
 
-  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*4;
+  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*8;
 
   //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
   // host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
