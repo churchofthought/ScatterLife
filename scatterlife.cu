@@ -49,7 +49,7 @@ __device__ Universe univ2 = {};
 
 __device__ UniImg raster = {};
 
-__device__ volatile unsigned int gTime = 0; 
+__device__ volatile unsigned int gTime = INITIAL_PARTICLE_COUNT; 
 
 //__device__ volatile unsigned int maxParticleCount = 0;
 
@@ -291,9 +291,9 @@ void initOpenGL(){
 
   // glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-                 GL_LINEAR);
+                 GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
-                 GL_LINEAR);
+                 GL_NEAREST);
   GLfloat fLargest;
   glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &fLargest);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, fLargest);
@@ -358,8 +358,6 @@ int main(int argc, char **argv)
 
   cudaSetDevice(0);
   CreateThread(NULL, 0, render, NULL, 0, NULL);
-
-  unsigned int INITIAL_PARTICLE_COUNT = UNIVERSE_WIDTH*8;
 
   //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
   // host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
