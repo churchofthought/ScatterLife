@@ -3,6 +3,9 @@ A universe simulation based on the principles of special relativity, mass, and e
 
 ------------
 
+## Video (click to play)
+[![ScatterLife Demo](https://img.youtube.com/vi/0bRmsGKufdY/0.jpg)](https://www.youtube.com/watch?v=0bRmsGKufdY "ScatterLife Demo")
+
 ## Playing Field
 
 Scatterlife takes place on a hexagonal lattice, wrapped at the edges like Asteroids. (flat torus topology.)
