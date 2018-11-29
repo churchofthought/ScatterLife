@@ -183,7 +183,7 @@ __global__ void runAutomata(bool direction){
   };
 
   if (blockIdx.x == 0){
-    gTime = (48271 * gTime) % (2147483647);
+    ++gTime;
   }
 }
 
@@ -215,7 +215,7 @@ __global__ void rasterizeAutomata(){
     || univ[x][y].bound[2] || univ[x][y].unbound[2]
     || univ[x][y].bound[3] || univ[x][y].unbound[3]
     || univ[x][y].bound[4] || univ[x][y].unbound[4]
-    || univ[x][y].bound[5] || univ[x][y].unbound[5] ? 0xFF000000 : 0xFFFFFFFF;
+    || univ[x][y].bound[5] || univ[x][y].unbound[5] ? RGB{1.0f, 1.0f, 1.0f} : RGB{0.0f, 0.0f, 0.0f};
 
   //(unsigned int)(16777215.0 * powf(pc / maxParticleCount, 0.2)) | 0xFF000000;
 }
@@ -267,8 +267,10 @@ void initOpenGL(){
   // glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
   // glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-  window = glfwCreateWindow(UNIVERSE_WIDTH/2, UNIVERSE_HEIGHT/2, "ScatterLife", NULL, NULL);
-  //window = glfwCreateWindow(mode->width, mode->height, "ScatterLife", NULL, NULL);
+  int width = mode->width*.75;//UNIVERSE_WIDTH;
+  int height = mode->height*.75;//UNIVERSE_HEIGHT;
+  window = glfwCreateWindow(width, height, "ScatterLife", NULL, NULL);
+  glfwSetWindowPos(window, (mode->width - width) / 2, (mode->height - height) / 2);
 
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -288,9 +290,9 @@ void initOpenGL(){
 
   // glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-                 GL_NEAREST);
+                 GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
-                 GL_NEAREST);
+                 GL_LINEAR);
   GLfloat fLargest;
   glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &fLargest);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, fLargest);
@@ -298,8 +300,8 @@ void initOpenGL(){
   glMatrixMode(GL_PROJECTION);
 
   GLdouble matrix[16] = {
-    sqrt(3.0), 0, 0, 0,
-    sqrt(3.0)/2.0, 3.0/2.0, 0, 0,
+    3.0/2.0, 0, 0, 0,
+    sqrt(3.0)/2.0, sqrt(3.0), 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1
   };
@@ -310,31 +312,75 @@ void initOpenGL(){
 }
 
 
-DWORD WINAPI render( LPVOID lpParam ) {
+
+int main(int argc, char **argv)
+{
   cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, 0);
   printf("  Device name: %s\n", prop.name);
 
   cudaSetDevice(0);
+
+  // //initialize automata
+  // for (int x = 0; x < UNIVERSE_WIDTH; ++x){
+  //   for (int y = 0; y < UNIVERSE_HEIGHT; ++y){
+  //     host_univ[x][y] = 
+  //   }
+  // }
+  
+  //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
+  //host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].unbound[1] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].unbound[2] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].unbound[3] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].unbound[4] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].unbound[5] = INITIAL_PARTICLE_COUNT;
+
+  //also set a 2nd wave of INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
+  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].bound[0] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].bound[1] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].bound[2] = INITIAL_PARTICLE_COUNT;
+  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].bound[3] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].bound[4] = INITIAL_PARTICLE_COUNT;
+  //host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].bound[5] = INITIAL_PARTICLE_COUNT;
+
+  cudaMemcpyToSymbol(univ, host_univ, sizeof(Universe), 0, cudaMemcpyHostToDevice);
+
+  
+  
+
+
+
   initOpenGL();
 
-  float scale = 0.7f;
+  float scale = 0.4f;
 
+  char title[128];
+  cudaEvent_t start, stop;
+  float milliseconds = 0;
+
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
+      cudaEventRecord(start);
+      runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1)>>>(true);
+      runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1)>>>(false);
+      cudaEventRecord(stop);
+
       // rasterize
-      rasterizeAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1),0,cudaStreamPerThread>>>();
+      rasterizeAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1)>>>();
 
       // copy raster back to host
-      cudaMemcpyFromSymbolAsync(host_raster, raster, sizeof(UniImg), 0, cudaMemcpyDeviceToHost, cudaStreamPerThread);
+      cudaMemcpyFromSymbol(host_raster, raster, sizeof(UniImg), 0, cudaMemcpyDeviceToHost);
 
-      cudaStreamSynchronize(cudaStreamPerThread);
+      //cudaStreamSynchronize(cudaStreamPerThread);
 
       //glClear(GL_COLOR_BUFFER_BIT);
       
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RASTER_WIDTH, RASTER_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, host_raster);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, RASTER_WIDTH, RASTER_HEIGHT, 0, GL_RGB, GL_FLOAT, host_raster);
       //glGenerateTextureMipmap(rasterTexture);
 
       glBegin(GL_TRIANGLE_STRIP);
@@ -348,38 +394,14 @@ DWORD WINAPI render( LPVOID lpParam ) {
 
       glfwSwapBuffers(window);
 
+
+      cudaEventElapsedTime((float*)&milliseconds, start, stop);
+      sprintf(title, "%.2f executions per sec",  2000.0f / (float) milliseconds);
+
+      glfwSetWindowTitle(window, title);
+
       glfwPollEvents();
-  }
 
-  exit(0);
-}
-
-
-int main(int argc, char **argv)
-{
-  cudaDeviceProp prop;
-  cudaGetDeviceProperties(&prop, 0);
-  printf("  Device name: %s\n", prop.name);
-
-  cudaSetDevice(0);
-  CreateThread(NULL, 0, render, NULL, 0, NULL);
-
-  //initialize INITIAL_PARTICLE_COUNT heading to center cell from every neighbor
-  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2-1].unbound[0] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2-1].unbound[1] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2+1][UNIVERSE_HEIGHT/2].unbound[2] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2][UNIVERSE_HEIGHT/2+1].unbound[3] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2+1].unbound[4] = INITIAL_PARTICLE_COUNT;
-  host_univ[UNIVERSE_WIDTH/2-1][UNIVERSE_HEIGHT/2].unbound[5] = INITIAL_PARTICLE_COUNT;
-
-  cudaMemcpyToSymbol(univ, host_univ, sizeof(Universe), 0, cudaMemcpyHostToDevice);
-
-  
-  for (;;){
-    // for (int i = 1; i--;){
-      runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1),0,cudaStreamPerThread >>>(true);
-      runAutomata<<<dim3(UNIVERSE_WIDTH, UNIVERSE_HEIGHT, 1), dim3(1,1,1),0,cudaStreamPerThread >>>(false);
-    // }
-    cudaStreamSynchronize(cudaStreamPerThread);
+      //Sleep(500);
   }
 }
