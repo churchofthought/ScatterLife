@@ -82,7 +82,7 @@ __global__ void runAutomata(bool direction){
   unsigned int x = blockIdx.x;
   unsigned int y = blockIdx.y;
 
-  unsigned int seed = gTime; //+ x + y + x*y + y*x*x+ y*y*x;
+  unsigned int seed = gTime + x + y + x*y + y*x*x+ y*y*x;
 
   unsigned int xm1 = x >= 1 ? x-1 : (UNIVERSE_WIDTH - 1);
   unsigned int xp1 = x < (UNIVERSE_WIDTH - 1) ? x+1 : 0;
