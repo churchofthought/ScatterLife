@@ -1,5 +1,5 @@
 # ScatterLife
-A universe simulation based on the principles of special relativity, mass, and energy.
+A cellular automata universe simulation based on the principles of special relativity, mass, and energy.
 
 ------------
 
@@ -8,7 +8,7 @@ A universe simulation based on the principles of special relativity, mass, and e
 
 ## Playing Field
 
-Scatterlife takes place on a hexagonal lattice, wrapped at the edges like Asteroids. (flat torus topology.)
+Scatterlife is a cellular automata that takes place on a hexagonal lattice, wrapped at the edges like Asteroids. (flat torus topology.)
 
 There are only 6 flavors of particles, a distinct one for each direction.
 ![The 6 particles and their directions](readme/hexagon-grid.png)
