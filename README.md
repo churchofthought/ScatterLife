@@ -4,7 +4,7 @@ A cellular automata universe simulation based on the principles of special relat
 ------------
 
 ## Video (click to play)
-[![ScatterLife Demo](https://img.youtube.com/vi/0bRmsGKufdY/0.jpg)](https://www.youtube.com/watch?v=0bRmsGKufdY "ScatterLife Demo")
+[![ScatterLife Demo](https://img.youtube.com/vi/xhiRjCEXDL4/0.jpg)](https://www.youtube.com/watch?v=xhiRjCEXDL4 "ScatterLife Demo")
 
 ## Playing Field
 
