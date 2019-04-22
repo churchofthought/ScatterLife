@@ -1,7 +1,10 @@
 # ScatterLife
 A cellular automata universe simulation based on the principles of special relativity, mass, and energy.
 
-------------
+----------
+
+## Initial Vision
+https://scrollto.com/blog/2017/04/11/life-a-universe-simulation/
 
 ## Video (click to play)
 [![ScatterLife Demo](https://img.youtube.com/vi/xhiRjCEXDL4/0.jpg)](https://www.youtube.com/watch?v=xhiRjCEXDL4 "ScatterLife Demo")
